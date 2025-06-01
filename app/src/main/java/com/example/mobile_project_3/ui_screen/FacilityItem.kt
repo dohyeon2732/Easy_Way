@@ -1,7 +1,5 @@
 package com.example.mobile_project_3.ui_screen
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,14 +42,14 @@ fun FacilityListItem(
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
             // ⬅ 왼쪽: 이미지
-            Image(
+            /*Image(
                 painter = painterResource(id = R.drawable.sampleimg),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(80.dp)
                     .background(Color.White, shape = RoundedCornerShape(8.dp))
-            )
+            )*/
 
             Spacer(modifier = Modifier.width(12.dp))
 

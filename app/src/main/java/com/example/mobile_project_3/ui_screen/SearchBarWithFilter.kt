@@ -140,7 +140,7 @@ fun SearchBarWithFilter(
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
                             .background(
-                                if (isSelected) Color(0xFF00BCD4) else Color.LightGray,
+                                if (isSelected) Color(0xFF30C4CC) else Color.LightGray,
                                 shape = RoundedCornerShape(8.dp)
                             )
                     ) {

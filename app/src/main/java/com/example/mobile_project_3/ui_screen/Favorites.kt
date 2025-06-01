@@ -19,8 +19,8 @@ import com.example.mobile_project_3.viewmodel.FacilityViewModel
 
 @Composable
 fun Favorites(navController: NavController, viewModel: FacilityViewModel) {
-    val facilities by viewModel.facilities.collectAsState() // ✅ 구독
-    val favoriteFacilities = facilities.filter { it.isFavorite } // ✅ 리스트로 필터링
+    val favoriteFacilities by viewModel.favoriteFacilities.collectAsState() // ✅ 수정
+    //val favoriteFacilities = facilities.filter { it.isFavorite } // ✅ 리스트로 필터링
 
     Column(
         modifier = Modifier

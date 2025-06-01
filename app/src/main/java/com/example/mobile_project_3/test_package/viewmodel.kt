@@ -44,21 +44,60 @@ class FacilityViewModel : ViewModel() {
 
     private val MAX_RESULT_LENGTH = 3000
 
-    fun setFacilities(newList: List<FacilityData>) {
+
+    private val _favoriteFacilities = MutableStateFlow<List<FacilityData>>(emptyList())
+    val favoriteFacilities: StateFlow<List<FacilityData>> get() = _favoriteFacilities
+
+
+    /*fun setFacilities(newList: List<FacilityData>) {
         val prevList = _facilities.value
         _facilities.value = newList.map { newItem ->
             val old = prevList.find { it.wlfctlId == newItem.wlfctlId }
             if (old?.isFavorite == true) newItem.copy(isFavorite = true) else newItem
         }
         updateFilteredFacilities()
+    }*/
+
+    fun setFacilities(newList: List<FacilityData>) {
+        val favoriteMap = _favoriteFacilities.value.associateBy { it.wlfctlId }
+
+        _facilities.value = newList.map { item ->
+            val isFav = favoriteMap.containsKey(item.wlfctlId)
+            item.copy(isFavorite = isFav)
+        }
+
+        updateFilteredFacilities()
     }
 
-    fun toggleFavorite(facility: FacilityData) {
+    /*fun toggleFavorite(facility: FacilityData) {
         _facilities.value = _facilities.value.map {
             if (it.wlfctlId == facility.wlfctlId) {
                 it.copy(isFavorite = !it.isFavorite)
             } else it
         }
+        updateFilteredFacilities()
+    }*/
+
+    fun toggleFavorite(facility: FacilityData) {
+        _facilities.value = _facilities.value.map {
+            if (it.wlfctlId == facility.wlfctlId) {
+                val updated = it.copy(isFavorite = !it.isFavorite)
+                updated
+            } else it
+        }
+
+        // favoriteFacilities 동기화
+        val currentFavs = _favoriteFacilities.value.toMutableList()
+        val exists = currentFavs.any { it.wlfctlId == facility.wlfctlId }
+
+        if (exists) {
+            currentFavs.removeAll { it.wlfctlId == facility.wlfctlId }
+        } else {
+            currentFavs.add(facility.copy(isFavorite = true))
+        }
+
+        _favoriteFacilities.value = currentFavs
+
         updateFilteredFacilities()
     }
 
@@ -178,4 +217,9 @@ class FacilityViewModel : ViewModel() {
             }
         }
     }
+
+
+
+
+
 }

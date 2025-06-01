@@ -41,11 +41,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
     var isLoading by remember { mutableStateOf(false) }
-
     var selectedFacility by remember { mutableStateOf<FacilityData?>(null) }
-
     var selectedTab by remember { mutableStateOf("home") } // or use enum
-
     val sheetState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
     val searchQuery by viewModel.searchQuery.collectAsState()

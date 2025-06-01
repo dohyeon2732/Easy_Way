@@ -1,10 +1,12 @@
-package com.example.mobile_project_3.ui_screen
+package com.example.mobile_project_3.Navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.mobile_project_3.Navigation.Screen
+import com.example.mobile_project_3.ui_screen.Favorites
+import com.example.mobile_project_3.ui_screen.HomeScreen
+import com.example.mobile_project_3.ui_screen.MyPage
 import com.example.mobile_project_3.viewmodel.FacilityViewModel
 
 @Composable

@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "977060995226",
-    "project_id": "ammenties",
-    "storage_bucket": "ammenties.firebasestorage.app"
+    "project_number": "66571926187",
+    "firebase_url": "https://easyway-2fc10-default-rtdb.firebaseio.com",
+    "project_id": "easyway-2fc10",
+    "storage_bucket": "easyway-2fc10.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:977060995226:android:d5d97e1a9ef06d40d5bf23",
+        "mobilesdk_app_id": "1:66571926187:android:e9b31cf3e1c6be150155ee",
         "android_client_info": {
           "package_name": "com.example.mobile_project_3"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCIdUeqIpuvb0H1a_JZq8t9thNWL1PP2mQ"
+          "current_key": "AIzaSyADhLu5TPnQWKE3y2VUyZfqXd5Zl59MRew"
         }
       ],
       "services": {

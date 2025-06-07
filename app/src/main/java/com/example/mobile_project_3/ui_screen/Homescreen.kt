@@ -57,7 +57,7 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
 
         Log.d("FACILITY_LOG", "🔍 검색 결과 (최대 10개): ${rawList.size}개")
 
-        val chunkedList = rawList.chunked(3)
+        val chunkedList = rawList.chunked(3) //10개를 3 3 4로 나눔
         val allFacilities = mutableListOf<FacilityData>()
 
         chunkedList.forEachIndexed { index, chunk ->
@@ -67,6 +67,7 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                         val xml = fetchEvalInfoByFacilityId("wfcltId", item.welfacilityId)
                         val eval = parseEvalXml(xml)
                         val evalList = eval.evalInfo.split(",").map { it.trim() }
+                        //정보 시설이 가진 정보 리스트
 
                         FacilityData(
                             faclNm = item.name,
@@ -93,7 +94,6 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
             }
             allFacilities += deferredList.awaitAll()
         }
-
         viewModel.setFacilities(allFacilities)
         delay(500L)
         isLoading = false
@@ -169,6 +169,8 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                                 // 필터 적용 시 ViewModel에서 filtering 기능 구현 가능
                                 viewModel.setSelectedFilters(selectedFilterSet)
                                 println("적용된 필터: $selectedFilterSet")
+                                Log.d("FilterList", "필터된 표시될 시설 수: ${selectedFilterSet}")
+
                             }
                         )
                         Box(
@@ -178,7 +180,8 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
-                            NaverMapScreen(facilities = filteredList)
+                            Log.d("facilites", "화면에 표시될 시설 수: ${filteredList}")
+                            NaverMapScreen(facilities = filteredList, viewModel = viewModel)
                             selectedFacility?.let { facility ->
                                 FacilityDetailOverlayCard(
                                     facility = facility,

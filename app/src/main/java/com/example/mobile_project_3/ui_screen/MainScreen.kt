@@ -16,7 +16,6 @@ fun MainScreen() {
     val navController = rememberNavController()
     val facilityViewModel: FacilityViewModel = viewModel()
 
-
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController)

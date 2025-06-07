@@ -7,8 +7,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.example.mobile_project_3.viewmodel.FacilityData
+import com.example.mobile_project_3.viewmodel.FacilityViewModel
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.CameraPosition
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.compose.ExperimentalNaverMapApi
 import com.naver.maps.map.compose.Marker
@@ -22,11 +22,14 @@ import com.naver.maps.map.compose.rememberMarkerState
 fun NaverMapScreen(
     modifier: Modifier = Modifier,
     facilities: List<FacilityData>,
+    viewModel: FacilityViewModel
 ) {
     val fallback = LatLng(37.5408, 127.0793)
-
-    val cameraPositionState = rememberCameraPositionState {
+    /*val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition(fallback, 13.0)
+    }*/
+    val cameraPositionState = rememberCameraPositionState {
+        position = viewModel.cameraState.value
     }
 
     LaunchedEffect(facilities) {
@@ -76,7 +79,7 @@ fun NaverMapScreen(
     }*/
     NaverMap(
         modifier = modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState
+        cameraPositionState = cameraPositionState,
     ) {
         facilities.forEach { facility ->
             val lat = facility.latitude.toDoubleOrNull()

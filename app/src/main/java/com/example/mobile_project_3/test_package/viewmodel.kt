@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobile_project_3.data.FacilityApi
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraPosition
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,6 +24,9 @@ data class FacilityData(
 )
 
 class FacilityViewModel : ViewModel() {
+
+    val cameraState = MutableStateFlow(CameraPosition(LatLng(37.5408, 127.0793), 13.0))
+    //초기 값
 
     private val _facilityResult = MutableStateFlow("")
     val facilityResult: StateFlow<String> get() = _facilityResult
@@ -48,16 +53,6 @@ class FacilityViewModel : ViewModel() {
     private val _favoriteFacilities = MutableStateFlow<List<FacilityData>>(emptyList())
     val favoriteFacilities: StateFlow<List<FacilityData>> get() = _favoriteFacilities
 
-
-    /*fun setFacilities(newList: List<FacilityData>) {
-        val prevList = _facilities.value
-        _facilities.value = newList.map { newItem ->
-            val old = prevList.find { it.wlfctlId == newItem.wlfctlId }
-            if (old?.isFavorite == true) newItem.copy(isFavorite = true) else newItem
-        }
-        updateFilteredFacilities()
-    }*/
-
     fun setFacilities(newList: List<FacilityData>) {
         val favoriteMap = _favoriteFacilities.value.associateBy { it.wlfctlId }
 
@@ -65,18 +60,8 @@ class FacilityViewModel : ViewModel() {
             val isFav = favoriteMap.containsKey(item.wlfctlId)
             item.copy(isFavorite = isFav)
         }
-
         updateFilteredFacilities()
     }
-
-    /*fun toggleFavorite(facility: FacilityData) {
-        _facilities.value = _facilities.value.map {
-            if (it.wlfctlId == facility.wlfctlId) {
-                it.copy(isFavorite = !it.isFavorite)
-            } else it
-        }
-        updateFilteredFacilities()
-    }*/
 
     fun toggleFavorite(facility: FacilityData) {
         _facilities.value = _facilities.value.map {
@@ -119,7 +104,7 @@ class FacilityViewModel : ViewModel() {
             all.filter { facility ->
                 Log.d("EVAL_INFO", "시설명: ${facility.faclNm}, 평가정보: ${facility.evalInfo}")
 
-                _selectedFilters.value.any { index ->
+                _selectedFilters.value.all { index ->
                     val keyword = when (index) {
                         0 -> "주출입구 접근로"
                         1 -> "주출입구 높이차이 제거"
@@ -217,9 +202,4 @@ class FacilityViewModel : ViewModel() {
             }
         }
     }
-
-
-
-
-
 }

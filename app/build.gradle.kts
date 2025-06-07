@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.naver.map.compose)
     implementation(libs.map.sdk)
     implementation("com.naver.maps:map-sdk:3.21.0")
+
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)

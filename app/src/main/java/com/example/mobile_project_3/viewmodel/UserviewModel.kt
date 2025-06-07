@@ -73,5 +73,4 @@ class UserViewModel : ViewModel() {
             .addOnFailureListener { onResult(false) }
     }
 
-
 }

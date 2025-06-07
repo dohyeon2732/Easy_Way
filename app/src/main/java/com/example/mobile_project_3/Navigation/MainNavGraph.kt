@@ -11,6 +11,7 @@ import com.example.mobile_project_3.viewmodel.FacilityViewModel
 
 @Composable
 fun MainNavGraph(navController: NavHostController, facilityViewModel: FacilityViewModel) {
+
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route

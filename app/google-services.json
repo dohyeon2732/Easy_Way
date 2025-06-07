@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "977060995226",
+    "project_id": "ammenties",
+    "storage_bucket": "ammenties.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:977060995226:android:d5d97e1a9ef06d40d5bf23",
+        "android_client_info": {
+          "package_name": "com.example.mobile_project_3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIdUeqIpuvb0H1a_JZq8t9thNWL1PP2mQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

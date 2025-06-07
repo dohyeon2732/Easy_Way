@@ -1,6 +1,4 @@
-package com.example.mobile_project_3.ui_screen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -12,12 +10,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,52 +29,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mobile_project_3.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar(
+fun SearchBarWithFilter(
     modifier: Modifier = Modifier,
-    onSearchClick: (String) -> Unit,  // 검색 버튼 클릭 시 전달
-    onFilterClick: () -> Unit         // 필터 버튼 클릭 시 전달
+    onSearchClick: (String) -> Unit,
+    onFilterApply: (Set<Int>) -> Unit
 ) {
     var query by remember { mutableStateOf("") }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedFilters by remember { mutableStateOf(setOf<Int>()) }
 
+    // 🔽 메인 UI
     Column(modifier = modifier.padding(16.dp)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp) // 높이 살짝 키움
+                .height(48.dp)
                 .background(Color.White, shape = RoundedCornerShape(8.dp))
-                .border(
-                    width = 1.dp,
-                    color = Color.Gray.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(8.dp)
-                ),
+                .border(1.dp, Color.Gray.copy(alpha = 0.3f), shape = RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.CenterStart
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 0.dp) // 여유 있는 padding
+                modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
             ) {
                 TextField(
                     value = query,
                     onValueChange = { query = it },
                     placeholder = {
-                        Text(
-                            "시설이나 지역을 검색하세요!",
-                            color = Color.Gray,
-                            fontSize = 12.sp,
-                            lineHeight = 5.sp
-                        )
+                        Text("시설이나 지역을 검색하세요!", color = Color.Gray, fontSize = 12.sp)
                     },
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 14.sp // 👈 입력되는 텍스트도 동일 크기로
-                    ),
+                    textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
@@ -85,28 +78,23 @@ fun SearchBar(
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black
                     ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                        .padding(
-                            horizontal = 0.dp, vertical = 0.dp
-                        ),
+                    modifier = Modifier.weight(1f).height(48.dp),
                     shape = RoundedCornerShape(0.dp),
                 )
-                // ✅ 이미지 아이콘으로 변경
                 IconButton(
-                    onClick = { println(onSearchClick(query)) },
+                    onClick = { onSearchClick(query) },
                     modifier = Modifier.size(36.dp)
                 ) {
-                    Image(
+                    Icon(
                         painter = painterResource(id = R.drawable.btn_search),
                         contentDescription = "검색",
-                        modifier = Modifier.fillMaxSize()
+                        tint = Color.Unspecified
                     )
                 }
             }
         }
-        // ℹ️ 필터 설정 안내
+
+        // ℹ️ 필터 안내 및 버튼
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -119,18 +107,60 @@ fun SearchBar(
                 modifier = Modifier.weight(1f),
                 color = Color.Gray
             )
-            TextButton(onClick = { onFilterClick() }) {
+            TextButton(onClick = { showFilterSheet = true }) {
                 Text("필터 설정하기")
             }
         }
     }
-}
 
-@Preview(showBackground = true)
-@Composable
-private fun preview() {
-    SearchBar(
-        onSearchClick = { query -> println("🔍 검색어: $query") },
-        onFilterClick = { println("⚙️ 필터 설정 클릭됨") }
-    )
+    // 🔽 필터 설정 BottomSheet
+    if (showFilterSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showFilterSheet = false },
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("필터 설정", fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+
+                val options = listOf(
+                    "주출입구 접근로", "주출입구 높이차이 제거", "주출입구(문)", "승강기",
+                    "장애인전용주차구역", "장애인사용가능화장실", "장애인사용가능객실", "유도 및 안내 설비"
+                )
+
+                options.forEachIndexed { index, label ->
+                    val isSelected = selectedFilters.contains(index)
+                    TextButton(
+                        onClick = {
+                            selectedFilters = selectedFilters.toMutableSet().apply {
+                                if (contains(index)) remove(index) else add(index)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .background(
+                                if (isSelected) Color(0xFF30C4CC) else Color.LightGray,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                    ) {
+                        Text(label, color = Color.White)
+                    }
+                }
+
+                // ✅ 확인 버튼
+                TextButton(
+                    onClick = {
+                        onFilterApply(selectedFilters)
+                        showFilterSheet = false
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Text("확인")
+                }
+            }
+        }
+    }
 }

@@ -1,12 +1,18 @@
 package com.example.mobile_project_3.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobile_project_3.data.FacilityApi
+import com.example.mobile_project_3.data.FacilityApi.fetchEvalInfoByFacilityId
+import com.example.mobile_project_3.data.FacilityCsvSearcher
+import com.example.mobile_project_3.data.parseEvalXml
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,10 +29,84 @@ data class FacilityData(
     val type: String,
 )
 
-class FacilityViewModel : ViewModel() {
+class FacilityViewModel(private val userViewModel: UserViewModel) : ViewModel() {
+
+    fun setFavoritesFromIds(context: Context, ids: Set<String>) {
+        viewModelScope.launch {
+            val facilityItems = FacilityCsvSearcher.searchFacilitiesByIds(context, ids)
+            val favoriteList = facilityItems.map { item ->
+                async {
+                    try {
+                        val xml = fetchEvalInfoByFacilityId("wfcltId", item.welfacilityId)
+                        val eval = parseEvalXml(xml)
+                        val evalList = eval.evalInfo.split(",").map { it.trim() }
+
+                        FacilityData(
+                            faclNm = item.name,
+                            type = item.type,
+                            latitude = item.latitude,
+                            longitude = item.longitude,
+                            address = item.address,
+                            wlfctlId = item.welfacilityId,
+                            evalInfo = evalList,
+                            isFavorite = true
+                        )
+                    } catch (e: Exception) {
+                        Log.e("FAVORITE_API", "📄 평가 정보 조회 실패: ${item.welfacilityId}", e)
+                        FacilityData(
+                            faclNm = item.name,
+                            type = item.type,
+                            latitude = item.latitude,
+                            longitude = item.longitude,
+                            address = item.address,
+                            wlfctlId = item.welfacilityId,
+                            evalInfo = listOf("정보 없음"),
+                            isFavorite = true
+                        )
+                    }
+                }
+            }.awaitAll()
+
+            _favoriteFacilities.value = favoriteList
+
+            // 기존 facilities 목록에서 즐겨찾기 반영
+            _facilities.value = _facilities.value.map { facility ->
+                facility.copy(isFavorite = ids.contains(facility.wlfctlId))
+            }
+
+            updateFilteredFacilities()
+        }
+    }
+    private var _lastLoadedQuery: String? = null
+    val lastLoadedQuery: String? get() = _lastLoadedQuery
+    private val _isDataLoaded = mutableStateOf(false)
+    val isDataLoaded: Boolean get() = _isDataLoaded.value
+
+    fun markDataLoaded(query: String) {
+        _lastLoadedQuery = query
+        _isDataLoaded.value = true
+    }
+
+    fun resetDataLoaded() {
+        _isDataLoaded.value = false
+        _lastLoadedQuery = null
+    }
+
+    private val _currentQuery = mutableStateOf("")
+    val currentQuery: String get() = _currentQuery.value
+
+    fun updateCurrentQuery(query: String) {
+        _currentQuery.value = query
+    }
+
+
 
     val cameraState = MutableStateFlow(CameraPosition(LatLng(37.5408, 127.0793), 13.0))
     //초기 값
+
+    fun setCameraPosition(latLng: LatLng) {
+        cameraState.value = CameraPosition(latLng, 13.0)
+    }
 
     private val _facilityResult = MutableStateFlow("")
     val facilityResult: StateFlow<String> get() = _facilityResult
@@ -35,7 +115,9 @@ class FacilityViewModel : ViewModel() {
     val searchQuery: StateFlow<String> get() = _searchQuery
 
     fun setSearchQuery(newQuery: String) {
+        if (newQuery == _searchQuery.value) return
         _searchQuery.value = newQuery
+        resetDataLoaded() // 새 쿼리니까 다시 로딩하도록 설정
     }
 
     private val _facilities = MutableStateFlow<List<FacilityData>>(emptyList())
@@ -67,14 +149,26 @@ class FacilityViewModel : ViewModel() {
         _facilities.value = _facilities.value.map {
             if (it.wlfctlId == facility.wlfctlId) {
                 val updated = it.copy(isFavorite = !it.isFavorite)
+
+                if (updated.isFavorite) {
+                    userViewModel.addFavorite(updated.wlfctlId) { success ->
+                        if (!success) {
+                            Log.e("FAVORITE", "🔥 Firebase 즐겨찾기 추가 실패")
+                        }
+                    }
+                } else {
+                    userViewModel.removeFavorite(updated.wlfctlId) { success ->
+                        if (!success) {
+                            Log.e("FAVORITE", "❌ Firebase 즐겨찾기 삭제 실패")
+                        }
+                    }
+                }
                 updated
             } else it
         }
-
         // favoriteFacilities 동기화
         val currentFavs = _favoriteFacilities.value.toMutableList()
         val exists = currentFavs.any { it.wlfctlId == facility.wlfctlId }
-
         if (exists) {
             currentFavs.removeAll { it.wlfctlId == facility.wlfctlId }
         } else {

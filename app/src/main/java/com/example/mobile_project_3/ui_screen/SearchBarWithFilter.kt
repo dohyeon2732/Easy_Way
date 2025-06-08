@@ -1,4 +1,3 @@
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -32,18 +31,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mobile_project_3.R
+import com.example.mobile_project_3.viewmodel.FacilityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarWithFilter(
     modifier: Modifier = Modifier,
     onSearchClick: (String) -> Unit,
-    onFilterApply: (Set<Int>) -> Unit
+    onFilterApply: (Set<Int>) -> Unit,
+    viewModel: FacilityViewModel, // ✅ ViewModel 주입
 ) {
-    var query by remember { mutableStateOf("") }
+    val query = viewModel.currentQuery // ✅ ViewModel에서 query 가져옴
     var showFilterSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var selectedFilters by remember { mutableStateOf(setOf<Int>()) }
+    val selectedFilters = viewModel.selectedFilters // ✅ 상태 가져오기
 
     // 🔽 메인 UI
     Column(modifier = modifier.padding(16.dp)) {
@@ -57,11 +58,15 @@ fun SearchBarWithFilter(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 0.dp)
             ) {
                 TextField(
                     value = query,
-                    onValueChange = { query = it },
+                    onValueChange = {
+                        viewModel.updateCurrentQuery(it) // ✅ 입력값 ViewModel에 저장
+                    },
                     placeholder = {
                         Text("시설이나 지역을 검색하세요!", color = Color.Gray, fontSize = 12.sp)
                     },
@@ -78,7 +83,9 @@ fun SearchBarWithFilter(
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black
                     ),
-                    modifier = Modifier.weight(1f).height(48.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                     shape = RoundedCornerShape(0.dp),
                 )
                 IconButton(
@@ -132,9 +139,10 @@ fun SearchBarWithFilter(
                     val isSelected = selectedFilters.contains(index)
                     TextButton(
                         onClick = {
-                            selectedFilters = selectedFilters.toMutableSet().apply {
+                            val updated = selectedFilters.toMutableSet().apply {
                                 if (contains(index)) remove(index) else add(index)
                             }
+                            viewModel.setSelectedFilters(updated) // ✅ ViewModel로 업데이트
                         },
                         modifier = Modifier
                             .fillMaxWidth()

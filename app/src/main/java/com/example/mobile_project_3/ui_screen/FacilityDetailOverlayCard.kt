@@ -25,7 +25,8 @@ import com.example.mobile_project_3.viewmodel.FacilityData
 @Composable
 fun FacilityDetailOverlayCard(
     facility: FacilityData,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier // ✅ 이렇게 받아야 함
 ) {
     Box(
         modifier = Modifier

@@ -34,7 +34,6 @@ import com.example.mobile_project_3.viewmodel.FacilityData
 import com.example.mobile_project_3.viewmodel.FacilityViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,9 +47,16 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     var showTopOnly by remember { mutableStateOf(true) }
 
+
     val context = LocalContext.current
 
     LaunchedEffect(searchQuery) {
+
+        if (viewModel.isDataLoaded && searchQuery == viewModel.lastLoadedQuery) {
+            Log.d("HOME_SCREEN", "🚫 API 재호출 생략됨")
+            return@LaunchedEffect
+        }
+
         isLoading = true
         val rawList = FacilityCsvSearcher.searchFacilitiesByKeyword(context, searchQuery)
             .take(10) // 최대 20개
@@ -95,7 +101,7 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
             allFacilities += deferredList.awaitAll()
         }
         viewModel.setFacilities(allFacilities)
-        delay(500L)
+        viewModel.markDataLoaded(searchQuery) // ✅ 로딩 완료 기록
         isLoading = false
     }
 
@@ -171,7 +177,8 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                                 println("적용된 필터: $selectedFilterSet")
                                 Log.d("FilterList", "필터된 표시될 시설 수: ${selectedFilterSet}")
 
-                            }
+                            },
+                            viewModel = viewModel
                         )
                         Box(
                             modifier = Modifier

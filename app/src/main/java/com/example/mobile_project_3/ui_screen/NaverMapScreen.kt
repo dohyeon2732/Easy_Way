@@ -28,9 +28,8 @@ fun NaverMapScreen(
     /*val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition(fallback, 13.0)
     }*/
-    val cameraPositionState = rememberCameraPositionState {
-        position = viewModel.cameraState.value
-    }
+    val cameraPositionState = rememberCameraPositionState()
+
 
     LaunchedEffect(facilities) {
         Log.d("MAP_SCREEN", "📍 마커 찍을 시설 수: ${facilities.size}")
@@ -43,7 +42,7 @@ fun NaverMapScreen(
         }
 
         // 유효한 한국 좌표인지 검증
-        val firstValidLatLng = facilities.firstOrNull {
+       val firstValidLatLng = facilities.firstOrNull {
             val lat = it.latitude.toDoubleOrNull()
             val lng = it.longitude.toDoubleOrNull()
             lat != null && lng != null &&
@@ -54,29 +53,11 @@ fun NaverMapScreen(
         }
 
         if (firstValidLatLng != null) {
-            Log.d("MAP_SCREEN", "✅ 지도 이동: ${firstValidLatLng.latitude}, ${firstValidLatLng.longitude}")
             cameraPositionState.move(CameraUpdate.scrollTo(firstValidLatLng))
-        } else {
-            Log.w("MAP_SCREEN", "⚠️ 유효한 좌표가 없어 중심 이동 생략됨")
+            // 👉 ViewModel에도 저장해두면 다음 화면 진입 시 기억 가능
+            viewModel.setCameraPosition(firstValidLatLng)
         }
     }
-
-    /*NaverMap(
-        modifier = modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState
-    ) {
-        facilities.forEach { facility ->
-            val lat = facility.latitude.toDoubleOrNull()
-            val lng = facility.longitude.toDoubleOrNull()
-            if (lat != null && lng != null) {
-                Log.d("MAP_SCREEN", "📍 마커 ${facility.faclNm} -> lat=$lat, lng=$lng")
-                Marker(
-                    state = rememberMarkerState(position = LatLng(lat, lng)),
-                    captionText = facility.faclNm
-                )
-            }
-        }
-    }*/
     NaverMap(
         modifier = modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,

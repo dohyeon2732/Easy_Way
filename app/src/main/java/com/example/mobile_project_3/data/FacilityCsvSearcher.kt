@@ -141,6 +141,33 @@ object FacilityCsvSearcher {
             .take(20)
             .map { it.first }
     }
+    fun searchFacilitiesByIds(context: Context, ids: Set<String>): List<FacilityItem> {
+        val lines = try {
+            context.assets.open("facility_all.csv").bufferedReader().readLines().drop(1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList()
+        }
+
+        return lines.mapNotNull { line ->
+            val tokens = line.split(",")
+            if (tokens.size < 9) return@mapNotNull null
+
+            val item = FacilityItem(
+                name = tokens[0],
+                type = tokens[1],
+                latitude = tokens[2],
+                longitude = tokens[3],
+                address = tokens[4],
+                businessStatus = tokens[5],
+                estbDate = tokens[6],
+                facilityId = tokens[7],
+                welfacilityId = tokens[8]
+            )
+
+            if (ids.contains(item.welfacilityId)) item else null
+        }
+    }
 }
 
 fun main5() {

@@ -10,6 +10,18 @@ class UserViewModel : ViewModel() {
     private val database = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
 
+    fun loadFavoritesFromFirebase(onLoaded: (Set<String>) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onLoaded(emptySet())
+        val favRef = database.child("users").child(uid).child("favorite")
+
+        favRef.get().addOnSuccessListener { snapshot ->
+            val favIds = snapshot.children.mapNotNull { it.key }.toSet()
+            onLoaded(favIds)
+        }.addOnFailureListener {
+            onLoaded(emptySet())
+        }
+    }
+
     fun register(email: String, password: String, onResult: (Boolean) -> Unit) {
 
         auth.createUserWithEmailAndPassword(email, password)

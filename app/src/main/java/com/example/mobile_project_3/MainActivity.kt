@@ -5,9 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.mobile_project_3.ui.theme.Mobile_project_3Theme
 import com.example.mobile_project_3.Navigation.EasyWayNavGraph
+import com.example.mobile_project_3.ui.theme.Mobile_project_3Theme
+import com.example.mobile_project_3.viewmodel.UserViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,5 +26,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigator() {
     val navController = rememberNavController()
-    EasyWayNavGraph(navController = navController)
+    val userViewModel: UserViewModel = viewModel()
+    EasyWayNavGraph(navController = navController, userViewModel = userViewModel)
 }

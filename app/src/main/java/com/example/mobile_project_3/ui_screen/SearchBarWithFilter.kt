@@ -51,7 +51,7 @@ fun SearchBarWithFilter(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(56.dp)
                 .background(Color.White, shape = RoundedCornerShape(8.dp))
                 .border(1.dp, Color.Gray.copy(alpha = 0.3f), shape = RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.CenterStart
@@ -85,16 +85,18 @@ fun SearchBarWithFilter(
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(0.dp),
+                        .height(56.dp)
+                        .padding(horizontal = 0.dp, vertical = 0.dp),
+                    shape = RoundedCornerShape(0.dp)
                 )
                 IconButton(
                     onClick = { onSearchClick(query) },
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(52.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.btn_search),
                         contentDescription = "검색",
+                        modifier = Modifier.size(48.dp), // 👈 여기 크기를 조절
                         tint = Color.Unspecified
                     )
                 }

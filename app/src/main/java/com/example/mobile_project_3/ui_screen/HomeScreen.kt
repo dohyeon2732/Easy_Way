@@ -32,11 +32,16 @@ import com.example.mobile_project_3.data.FacilityCsvSearcher
 import com.example.mobile_project_3.data.parseEvalXml
 import com.example.mobile_project_3.viewmodel.FacilityData
 import com.example.mobile_project_3.viewmodel.FacilityViewModel
+import com.naver.maps.map.compose.ExperimentalNaverMapApi
+import com.naver.maps.map.compose.rememberCameraPositionState
+import com.naver.maps.map.compose.rememberFusedLocationSource
+import com.naver.maps.map.location.FusedLocationSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalNaverMapApi::class)
 @Composable
 fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
     var isLoading by remember { mutableStateOf(false) }
@@ -47,6 +52,26 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     var showTopOnly by remember { mutableStateOf(true) }
 
+
+    val rememberedCameraState = rememberCameraPositionState()
+    val rememberedLocationSource = rememberFusedLocationSource() as FusedLocationSource
+
+    val cameraPositionState = remember {
+        viewModel.cameraPositionState ?: rememberedCameraState
+    }
+    val locationSource = remember {
+        viewModel.locationSource ?: rememberedLocationSource
+    }
+
+    // 📌 최초 한 번만 ViewModel에 저장
+    LaunchedEffect(Unit) {
+        if (viewModel.cameraPositionState == null) {
+            viewModel.updateCameraPositionState(cameraPositionState)
+        }
+        if (viewModel.locationSource == null) {
+            viewModel.updateLocationSource(locationSource)
+        }
+    }
 
     val context = LocalContext.current
 
@@ -188,7 +213,12 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                             contentAlignment = Alignment.Center
                         ) {
                             Log.d("facilites", "화면에 표시될 시설 수: ${filteredList}")
-                            NaverMapScreen(facilities = filteredList, viewModel = viewModel)
+                            NaverMapScreen(
+                                facilities = filteredList,
+                                viewModel = viewModel,
+                                cameraPositionState = cameraPositionState,
+                                locationSource = locationSource
+                            )
                             selectedFacility?.let { facility ->
                                 FacilityDetailOverlayCard(
                                     facility = facility,

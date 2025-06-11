@@ -2,7 +2,9 @@ package com.example.mobile_project_3.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobile_project_3.data.FacilityApi
@@ -11,6 +13,8 @@ import com.example.mobile_project_3.data.FacilityCsvSearcher
 import com.example.mobile_project_3.data.parseEvalXml
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.CameraPosition
+import com.naver.maps.map.compose.CameraPositionState
+import com.naver.maps.map.location.FusedLocationSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +34,23 @@ data class FacilityData(
 )
 
 class FacilityViewModel(private val userViewModel: UserViewModel) : ViewModel() {
+
+    var cameraPositionState: CameraPositionState? by mutableStateOf(null)
+    var locationSource: FusedLocationSource? by mutableStateOf(null)
+
+    fun updateCameraPositionState(state: CameraPositionState) {
+        cameraPositionState = state
+    }
+    fun updateLocationSource(source: FusedLocationSource) {
+        locationSource = source
+    }
+
+    var showFavoritesOnly = mutableStateOf(false)
+        private set
+
+    fun toggleFavoritesOnly() {
+        showFavoritesOnly.value = !showFavoritesOnly.value
+    }
 
     fun setFavoritesFromIds(context: Context, ids: Set<String>) {
         viewModelScope.launch {

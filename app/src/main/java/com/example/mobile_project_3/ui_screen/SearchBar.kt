@@ -44,7 +44,7 @@ fun SearchBar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp) // 높이 살짝 키움
+                .height(56.dp) // 높이 살짝 키움
                 .background(Color.White, shape = RoundedCornerShape(8.dp))
                 .border(
                     width = 1.dp,
@@ -87,7 +87,7 @@ fun SearchBar(
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .height(56.dp)
                         .padding(
                             horizontal = 0.dp, vertical = 0.dp
                         ),
@@ -96,7 +96,7 @@ fun SearchBar(
                 // ✅ 이미지 아이콘으로 변경
                 IconButton(
                     onClick = { println(onSearchClick(query)) },
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(56.dp)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.btn_search),

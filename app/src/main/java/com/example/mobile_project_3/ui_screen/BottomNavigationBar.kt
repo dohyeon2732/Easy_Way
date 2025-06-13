@@ -45,7 +45,7 @@ fun BottomNavigationBar(navController: NavController) {
             onClick = {
                 if (currentRoute != Screen.Home.route) {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false  }
                         launchSingleTop = true
                     }
                 }
@@ -70,7 +70,7 @@ fun BottomNavigationBar(navController: NavController) {
             onClick = {
                 if (currentRoute != Screen.Favorites.route) {
                     navController.navigate(Screen.Favorites.route) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         launchSingleTop = true
                     }
                 }

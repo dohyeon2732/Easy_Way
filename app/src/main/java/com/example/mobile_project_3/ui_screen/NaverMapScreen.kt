@@ -1,4 +1,6 @@
 package com.example.mobile_project_3.ui_screen
+
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,7 +9,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +36,6 @@ import com.naver.maps.map.compose.Marker
 import com.naver.maps.map.compose.NaverMap
 import com.naver.maps.map.compose.rememberMarkerState
 
-
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalNaverMapApi::class)
 @Composable
 fun NaverMapScreen(
@@ -42,15 +45,8 @@ fun NaverMapScreen(
     cameraPositionState: CameraPositionState,
     locationSource: LocationSource
 ) {
-
-
-    val showFavoritesOnly = viewModel.showFavoritesOnly.value
-
-    val filteredFacilities = if (showFavoritesOnly) {
-        facilities.filter { it.isFavorite }
-    } else facilities
-
-
+    val context = LocalContext.current
+    val fallback = LatLng(37.5408, 127.0793)
 
     val permissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -58,31 +54,44 @@ fun NaverMapScreen(
             android.Manifest.permission.ACCESS_COARSE_LOCATION
         )
     )
+    val granted = permissionState.permissions.all { it.status.isGranted }
 
-    val context = LocalContext.current
-    val fallback = LatLng(37.5408, 127.0793)
-
-
-    // 권한 요청
     LaunchedEffect(permissionState) {
         permissionState.launchMultiplePermissionRequest()
     }
 
-    val granted = permissionState.permissions.all { it.status.isGranted }
+    val showFavoritesOnly by remember { viewModel.showFavoritesOnly }
 
-    // 지도 시작 위치 설정
+    val filteredFacilities = if (showFavoritesOnly) {
+        facilities.filter { it.isFavorite }
+    } else facilities
+
+    // ✅ 지도 중심 좌표 복원
+    LaunchedEffect(Unit) {
+        val saved = viewModel.getCameraPosition()
+        cameraPositionState.move(CameraUpdate.scrollTo(saved))
+        Log.d("position_re", "📍 [Initial Load] moved to saved $saved")
+    }
+
+    // ✅ 시설 변경 시 최초 유효 좌표로 이동
     LaunchedEffect(facilities) {
-        val firstValidLatLng = facilities.firstOrNull {
-            val lat = it.latitude.toDoubleOrNull()
-            val lng = it.longitude.toDoubleOrNull()
-            lat != null && lng != null && lat in 33.0..39.0 && lng in 124.0..132.0
-        }?.let {
-            LatLng(it.latitude.toDouble(), it.longitude.toDouble())
+        if (!viewModel.consumeDataLoaded()) {
+            Log.d("position_re", "🚫 [facilities] 플래그 소비 실패, 이동 생략")
+            return@LaunchedEffect
         }
 
-        if (firstValidLatLng != null) {
-            cameraPositionState.move(CameraUpdate.scrollTo(firstValidLatLng))
-            viewModel.setCameraPosition(firstValidLatLng)
+        val firstValid = facilities.firstOrNull {
+            it.latitude.toDoubleOrNull()?.let { lat -> lat in 33.0..39.0 } == true &&
+                    it.longitude.toDoubleOrNull()?.let { lng -> lng in 124.0..132.0 } == true
+        }
+
+        if (firstValid != null) {
+            val target = LatLng(firstValid.latitude.toDouble(), firstValid.longitude.toDouble())
+            cameraPositionState.move(CameraUpdate.scrollTo(target))
+            viewModel.setCameraPosition(target)
+            Log.d("position_re", "📍 [Facilities Load] moved to $target")
+        } else {
+            Log.d("position_re", "⚠️ [Facilities Load] 유효 좌표 없음")
         }
     }
 
@@ -93,13 +102,11 @@ fun NaverMapScreen(
             cameraPositionState = cameraPositionState,
             locationSource = locationSource.takeIf { granted },
             properties = MapProperties(
-                locationTrackingMode = if (granted) LocationTrackingMode.Follow else LocationTrackingMode.None
+                locationTrackingMode = LocationTrackingMode.None
             ),
-            uiSettings = MapUiSettings(
-                isLocationButtonEnabled = true
-            )
+            uiSettings = MapUiSettings(isLocationButtonEnabled = true)
         ) {
-            filteredFacilities.forEach { facility -> // 👈 여기 수정
+            filteredFacilities.forEach { facility ->
                 val lat = facility.latitude.toDoubleOrNull()
                 val lng = facility.longitude.toDoubleOrNull()
                 if (lat != null && lng != null && lat in 33.0..39.0 && lng in 124.0..132.0) {
@@ -109,7 +116,9 @@ fun NaverMapScreen(
                             state = rememberMarkerState(position = position),
                             captionText = facility.faclNm,
                             onClick = {
-                                cameraPositionState.move(CameraUpdate.scrollTo(position)) // ✅ 이동
+                                cameraPositionState.move(CameraUpdate.scrollTo(position))
+                                viewModel.setCameraPosition(position)
+                                Log.d("position_re", "📍 [Marker] moved to $position")
                                 true
                             }
                         )
@@ -118,23 +127,22 @@ fun NaverMapScreen(
             }
         }
 
-        // 🧭 현재 위치로 이동 버튼 (오른쪽 중간)
+        // 🧭 현재 위치로 이동 버튼
         IconButton(
             onClick = {
-                // 실제 현재 위치로 이동
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    if (location != null) {
-                        val current = LatLng(location.latitude, location.longitude)
-                        cameraPositionState.move(CameraUpdate.scrollTo(current))
-                    } else {
-                        // fallback 이동
-                        cameraPositionState.move(CameraUpdate.scrollTo(fallback))
-                    }
+                    val current = if (location != null) {
+                        LatLng(location.latitude, location.longitude)
+                    } else fallback
+
+                    cameraPositionState.move(CameraUpdate.scrollTo(current))
+                    viewModel.setCameraPosition(current)
+                    Log.d("position_re", "📍 [Current Location] moved to $current")
                 }
             },
             modifier = Modifier
-                .align(Alignment.TopEnd) // 👉 오른쪽 중앙
+                .align(Alignment.TopEnd)
                 .padding(top = 8.dp, end = 8.dp)
                 .size(56.dp)
         ) {
@@ -144,19 +152,19 @@ fun NaverMapScreen(
                 modifier = Modifier.fillMaxSize()
             )
         }
+
+        // ⭐ 즐겨찾기 토글 버튼
         IconButton(
-            onClick = {
-                viewModel.toggleFavoritesOnly() // 👈 상태 토글
-            },
+            onClick = { viewModel.toggleFavoritesOnly() },
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 72.dp, end = 8.dp) // 👉 아래로 살짝 떨어뜨리기
+                .padding(top = 72.dp, end = 8.dp)
                 .size(56.dp)
         ) {
             val icon = if (showFavoritesOnly)
-                painterResource(id = R.drawable.favorite_star_on) // 즐겨찾기만 보기일 때
+                painterResource(id = R.drawable.favorite_star_on)
             else
-                painterResource(id = R.drawable.favorite_star_off) // 전체 보기일 때
+                painterResource(id = R.drawable.favorite_star_off)
 
             Image(
                 painter = icon,

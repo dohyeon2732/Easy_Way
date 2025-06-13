@@ -57,7 +57,7 @@ fun MainScreen(userViewModel: UserViewModel) {
         }
 
         facilityViewModel.setFacilities(facilityList)
-        facilityViewModel.markDataLoaded(initialKeyword)
+        facilityViewModel.markDataLoaded() // ✅ 인자 제거
         facilityViewModel.updateCurrentQuery(initialKeyword)
 
         userViewModel.loadFavoritesFromFirebase { favoriteIds ->
@@ -73,7 +73,7 @@ fun MainScreen(userViewModel: UserViewModel) {
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            MainNavGraph(navController,facilityViewModel)
+            MainNavGraph(navController, facilityViewModel)
         }
     }
 }

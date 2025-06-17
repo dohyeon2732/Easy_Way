@@ -11,11 +11,30 @@ import com.example.mobile_project_3.ui_screen.SplashScreen
 import com.example.mobile_project_3.viewmodel.UserViewModel
 
 @Composable
+<<<<<<< HEAD
 fun EasyWayNavGraph(navController: NavHostController,userViewModel: UserViewModel) {
+=======
+fun EasyWayNavGraph(
+    navController: NavHostController,
+    userViewModel: UserViewModel,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
+>>>>>>> 964ebc6 (Initial commit)
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) { SplashScreen(navController) }
         composable(Screen.Login.route) { LoginScreen(navController, userViewModel) }
         composable(Screen.Signup.route) { SignupScreen(navController, userViewModel) }
+<<<<<<< HEAD
         composable(Screen.Home.route) { MainScreen(userViewModel) }
+=======
+        composable(Screen.Home.route) {
+            MainScreen(
+                userViewModel = userViewModel,
+                isDarkTheme = isDarkTheme,
+                onThemeChange = onThemeChange
+            )
+        }
+>>>>>>> 964ebc6 (Initial commit)
     }
 }

@@ -10,6 +10,18 @@ class UserViewModel : ViewModel() {
     private val database = FirebaseDatabase.getInstance().reference
     private val auth = FirebaseAuth.getInstance()
 
+    fun loadFavoritesFromFirebase(onLoaded: (Set<String>) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onLoaded(emptySet())
+        val favRef = database.child("users").child(uid).child("favorite")
+
+        favRef.get().addOnSuccessListener { snapshot ->
+            val favIds = snapshot.children.mapNotNull { it.key }.toSet()
+            onLoaded(favIds)
+        }.addOnFailureListener {
+            onLoaded(emptySet())
+        }
+    }
+
     fun register(email: String, password: String, onResult: (Boolean) -> Unit) {
 
         auth.createUserWithEmailAndPassword(email, password)
@@ -34,6 +46,7 @@ class UserViewModel : ViewModel() {
         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             onResult(task.isSuccessful)
         }
+<<<<<<< HEAD
 
 
         fun deleteUser(onResult: (Boolean) -> Unit) {
@@ -53,6 +66,26 @@ class UserViewModel : ViewModel() {
                     }
                 }
         }
+=======
+    }
+
+    fun deleteUser(onResult: (Boolean) -> Unit) {
+        val user = auth.currentUser
+        val uid = user?.uid ?: return onResult(false)
+
+        database.child("users").child(uid).removeValue()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    user.delete()
+                        .addOnCompleteListener { auth ->
+                            onResult(auth.isSuccessful)
+                        }
+                        .addOnFailureListener { onResult(false) }
+                } else {
+                    onResult(false)
+                }
+            }
+>>>>>>> 964ebc6 (Initial commit)
     }
 
     fun addFavorite(facilityId: String, onResult: (Boolean) -> Unit) {
@@ -73,5 +106,52 @@ class UserViewModel : ViewModel() {
             .addOnFailureListener { onResult(false) }
     }
 
+<<<<<<< HEAD
+=======
+    fun changePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        if (user != null) {
+            user.updatePassword(newPassword)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        onResult(true, null)
+                    } else {
+                        onResult(false, task.exception?.message)
+                    }
+                }
+        } else {
+            onResult(false, "로그인 정보가 없습니다.")
+        }
+    }
 
+    fun logout(onResult: () -> Unit = {}) {
+        auth.signOut()
+        onResult()
+    }
+
+    fun deleteAccount(onResult: (Boolean, String?) -> Unit) {
+        val user = auth.currentUser
+        val uid = user?.uid
+        if (user == null || uid == null) {
+            onResult(false, "로그인 정보가 없습니다.")
+            return
+        }
+        // 1. DB에서 사용자 정보 삭제
+        database.child("users").child(uid).removeValue().addOnCompleteListener { dbTask ->
+            if (dbTask.isSuccessful) {
+                // 2. Auth에서 계정 삭제
+                user.delete().addOnCompleteListener { authTask ->
+                    if (authTask.isSuccessful) {
+                        onResult(true, null)
+                    } else {
+                        onResult(false, authTask.exception?.message)
+                    }
+                }
+            } else {
+                onResult(false, dbTask.exception?.message)
+            }
+        }
+    }
+
+>>>>>>> 964ebc6 (Initial commit)
 }

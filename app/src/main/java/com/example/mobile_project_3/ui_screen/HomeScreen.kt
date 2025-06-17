@@ -35,10 +35,11 @@ import com.example.mobile_project_3.viewmodel.FacilityViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import androidx.compose.material3.Divider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
+fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDarkTheme: Boolean) {
     var isLoading by remember { mutableStateOf(false) }
     var selectedFacility by remember { mutableStateOf<FacilityData?>(null) }
     var selectedTab by remember { mutableStateOf("home") } // or use enum
@@ -46,7 +47,6 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
     val scope = rememberCoroutineScope()
     val searchQuery by viewModel.searchQuery.collectAsState()
     var showTopOnly by remember { mutableStateOf(true) }
-
 
     val context = LocalContext.current
 
@@ -107,22 +107,30 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
 
     val filteredList by viewModel.filteredFacilities.collectAsState() // ✅ 스코프를 전체로 확장
 
-    Box(modifier = Modifier.fillMaxSize()
-        .background(Color.White)) { // 👈 전체를 감싸는 Box로 바꿈
-        Column(modifier = Modifier.fillMaxSize()
-            .background(Color.White)) {
-            Box(modifier = Modifier.weight(1f)
-                .background(Color.White)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
+        ) {
+            Box(
+                modifier = Modifier.weight(1f)
+                    .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
+            ) {
                 BottomSheetScaffold(
                     scaffoldState = sheetState,
                     sheetPeekHeight = if (showTopOnly) 160.dp else 500.dp,
                     sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    containerColor = White,
+                    containerColor = if (isDarkTheme) Color(0xFF3c3c3c) else Color.White,
                     sheetContent = {
-                        Column( // ✅ 새로 감싸기
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.White) // ✅ 흰색 배경 지정
+                                .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
                         ) {
                             Log.d("UI_DEBUG", "화면에 표시될 시설 수: ${filteredList.size}")
                             FacilityList(
@@ -152,7 +160,8 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                                             Log.e("FACILITY_ERROR", "시설 선택 실패", e)
                                         }
                                     }
-                                }
+                                },
+                                isDarkTheme = isDarkTheme
                             )
                         }
                     }
@@ -161,7 +170,7 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
-                            .background(Color.White)
+                            .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
                     ) {
                         SearchBarWithFilter(
                             onSearchClick = { query ->
@@ -172,19 +181,18 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
                                 }
                             },
                             onFilterApply = { selectedFilterSet ->
-                                // 필터 적용 시 ViewModel에서 filtering 기능 구현 가능
                                 viewModel.setSelectedFilters(selectedFilterSet)
                                 println("적용된 필터: $selectedFilterSet")
                                 Log.d("FilterList", "필터된 표시될 시설 수: ${selectedFilterSet}")
-
                             },
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            isDarkTheme = isDarkTheme
                         )
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
-                                .background(Color.White),
+                                .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White),
                             contentAlignment = Alignment.Center
                         ) {
                             Log.d("facilites", "화면에 표시될 시설 수: ${filteredList}")
@@ -201,17 +209,15 @@ fun HomeScreen(navController: NavController,viewModel: FacilityViewModel) {
             }
         }
 
-        // ✅ 로딩 인디케이터는 화면 위에 덮어씀
         if (isLoading) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0x88000000)), // 반투명 배경
+                    .background(Color(0x88000000)),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.CircularProgressIndicator()
             }
         }
     }
-
 }

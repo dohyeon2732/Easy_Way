@@ -17,7 +17,15 @@ import com.example.mobile_project_3.viewmodel.FacilityViewModel
 import com.example.mobile_project_3.viewmodel.UserViewModel
 
 @Composable
+<<<<<<< HEAD
 fun MainScreen(userViewModel: UserViewModel) {
+=======
+fun MainScreen(
+    userViewModel: UserViewModel,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
+>>>>>>> 964ebc6 (Initial commit)
 
     val navController = rememberNavController()
     val facilityViewModel = remember { FacilityViewModel(userViewModel) }
@@ -69,11 +77,19 @@ fun MainScreen(userViewModel: UserViewModel) {
 
     Scaffold(
         bottomBar = {
+<<<<<<< HEAD
             BottomNavigationBar(navController)
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             MainNavGraph(navController,facilityViewModel)
+=======
+            BottomNavigationBar(navController, isDarkTheme)
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            MainNavGraph(navController, facilityViewModel, isDarkTheme, onThemeChange, userViewModel)
+>>>>>>> 964ebc6 (Initial commit)
         }
     }
 }

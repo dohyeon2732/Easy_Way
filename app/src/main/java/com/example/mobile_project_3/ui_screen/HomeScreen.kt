@@ -32,48 +32,61 @@ import com.example.mobile_project_3.data.FacilityCsvSearcher
 import com.example.mobile_project_3.data.parseEvalXml
 import com.example.mobile_project_3.viewmodel.FacilityData
 import com.example.mobile_project_3.viewmodel.FacilityViewModel
+import com.naver.maps.geometry.LatLng
+import com.naver.maps.map.CameraUpdate
+import com.naver.maps.map.compose.ExperimentalNaverMapApi
+import com.naver.maps.map.compose.rememberCameraPositionState
+import com.naver.maps.map.compose.rememberFusedLocationSource
+import com.naver.maps.map.location.FusedLocationSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import androidx.compose.material3.Divider
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalNaverMapApi::class)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDarkTheme: Boolean) {
     var isLoading by remember { mutableStateOf(false) }
     var selectedFacility by remember { mutableStateOf<FacilityData?>(null) }
-    var selectedTab by remember { mutableStateOf("home") } // or use enum
     val sheetState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
     val searchQuery by viewModel.searchQuery.collectAsState()
     var showTopOnly by remember { mutableStateOf(true) }
 
+    val cameraPositionState = rememberCameraPositionState()
+    val locationSource = rememberFusedLocationSource() as FusedLocationSource
+
     val context = LocalContext.current
 
-    LaunchedEffect(searchQuery) {
+    // ✅ ViewModel에 저장된 좌표로 초기 지도 위치 이동
+    LaunchedEffect(Unit) {
+        val savedLatLng = viewModel.getCameraPosition()
+        Log.d("HomeScreen", "📦 초기 진입 → ViewModel 저장 위치: $savedLatLng")
+        cameraPositionState.move(CameraUpdate.scrollTo(savedLatLng))
+        Log.d("HomeScreen", "📍 지도 초기 위치 이동: $savedLatLng")
+    }
 
-        if (viewModel.isDataLoaded && searchQuery == viewModel.lastLoadedQuery) {
+    // ✅ 검색어 변경 시 데이터 불러오기 & 지도 이동
+    LaunchedEffect(searchQuery) {
+        if (!viewModel.consumeDataLoaded()) {
             Log.d("HOME_SCREEN", "🚫 API 재호출 생략됨")
             return@LaunchedEffect
         }
 
         isLoading = true
-        val rawList = FacilityCsvSearcher.searchFacilitiesByKeyword(context, searchQuery)
-            .take(10) // 최대 20개
-
+        val rawList = FacilityCsvSearcher.searchFacilitiesByKeyword(context, searchQuery).take(10)
         Log.d("FACILITY_LOG", "🔍 검색 결과 (최대 10개): ${rawList.size}개")
 
-        val chunkedList = rawList.chunked(3) //10개를 3 3 4로 나눔
+        val chunkedList = rawList.chunked(3)
         val allFacilities = mutableListOf<FacilityData>()
 
-        chunkedList.forEachIndexed { index, chunk ->
+        chunkedList.forEach { chunk ->
             val deferredList = chunk.map { item ->
                 async {
                     try {
                         val xml = fetchEvalInfoByFacilityId("wfcltId", item.welfacilityId)
                         val eval = parseEvalXml(xml)
                         val evalList = eval.evalInfo.split(",").map { it.trim() }
-                        //정보 시설이 가진 정보 리스트
 
                         FacilityData(
                             faclNm = item.name,
@@ -100,12 +113,31 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
             }
             allFacilities += deferredList.awaitAll()
         }
+
         viewModel.setFacilities(allFacilities)
-        viewModel.markDataLoaded(searchQuery) // ✅ 로딩 완료 기록
+
+        // ✅ 첫 유효 좌표로 지도 이동 및 저장
+        val firstValid = allFacilities.firstOrNull {
+            val lat = it.latitude.toDoubleOrNull()
+            val lng = it.longitude.toDoubleOrNull()
+            lat != null && lng != null && lat in 33.0..39.0 && lng in 124.0..132.0
+        }
+
+        firstValid?.let {
+            val latLng = LatLng(it.latitude.toDouble(), it.longitude.toDouble())
+            Log.d("HomeScreen", "🔍 검색 결과 중 첫 유효 좌표 발견: $latLng")
+
+            cameraPositionState.move(CameraUpdate.scrollTo(latLng))
+            Log.d("HomeScreen", "📍 지도 이동 완료 (검색 결과 위치)")
+
+            viewModel.setCameraPosition(latLng)
+            Log.d("HomeScreen", "📍 최초 결과 위치로 이동: $latLng")
+        }
+
         isLoading = false
     }
 
-    val filteredList by viewModel.filteredFacilities.collectAsState() // ✅ 스코프를 전체로 확장
+    val filteredList by viewModel.filteredFacilities.collectAsState()
 
     Box(
         modifier = Modifier
@@ -132,7 +164,7 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
                                 .fillMaxWidth()
                                 .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
                         ) {
-                            Log.d("UI_DEBUG", "화면에 표시될 시설 수: ${filteredList.size}")
+                            Log.d("UI_DEBUG", "표시될 시설 수: ${filteredList.size}")
                             FacilityList(
                                 facilities = filteredList,
                                 showTopOnly = showTopOnly,
@@ -151,14 +183,9 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
                                 onToggleFavorite = { viewModel.toggleFavorite(it) },
                                 onItemClick = { facility ->
                                     scope.launch {
-                                        try {
-                                            showTopOnly = true
-                                            sheetState.bottomSheetState.partialExpand()
-                                            selectedFacility =
-                                                viewModel.filteredFacilities.value.find { it.wlfctlId == facility.wlfctlId }
-                                        } catch (e: Exception) {
-                                            Log.e("FACILITY_ERROR", "시설 선택 실패", e)
-                                        }
+                                        showTopOnly = true
+                                        sheetState.bottomSheetState.partialExpand()
+                                        selectedFacility = facility
                                     }
                                 },
                                 isDarkTheme = isDarkTheme
@@ -184,10 +211,12 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
                                 viewModel.setSelectedFilters(selectedFilterSet)
                                 println("적용된 필터: $selectedFilterSet")
                                 Log.d("FilterList", "필터된 표시될 시설 수: ${selectedFilterSet}")
+
                             },
                             viewModel = viewModel,
                             isDarkTheme = isDarkTheme
                         )
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -195,8 +224,12 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
                                 .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White),
                             contentAlignment = Alignment.Center
                         ) {
-                            Log.d("facilites", "화면에 표시될 시설 수: ${filteredList}")
-                            NaverMapScreen(facilities = filteredList, viewModel = viewModel)
+                            NaverMapScreen(
+                                facilities = filteredList,
+                                viewModel = viewModel,
+                                cameraPositionState = cameraPositionState,
+                                locationSource = locationSource
+                            )
                             selectedFacility?.let { facility ->
                                 FacilityDetailOverlayCard(
                                     facility = facility,
@@ -214,10 +247,13 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0x88000000)),
+
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.CircularProgressIndicator()
             }
         }
     }
+
 }
+

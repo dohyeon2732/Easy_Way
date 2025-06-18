@@ -17,15 +17,12 @@ import com.example.mobile_project_3.viewmodel.FacilityViewModel
 import com.example.mobile_project_3.viewmodel.UserViewModel
 
 @Composable
-<<<<<<< HEAD
-fun MainScreen(userViewModel: UserViewModel) {
-=======
+
 fun MainScreen(
     userViewModel: UserViewModel,
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit
 ) {
->>>>>>> 964ebc6 (Initial commit)
 
     val navController = rememberNavController()
     val facilityViewModel = remember { FacilityViewModel(userViewModel) }
@@ -65,7 +62,7 @@ fun MainScreen(
         }
 
         facilityViewModel.setFacilities(facilityList)
-        facilityViewModel.markDataLoaded(initialKeyword)
+        facilityViewModel.markDataLoaded() // ✅ 인자 제거
         facilityViewModel.updateCurrentQuery(initialKeyword)
 
         userViewModel.loadFavoritesFromFirebase { favoriteIds ->
@@ -77,19 +74,12 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-<<<<<<< HEAD
-            BottomNavigationBar(navController)
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            MainNavGraph(navController,facilityViewModel)
-=======
             BottomNavigationBar(navController, isDarkTheme)
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             MainNavGraph(navController, facilityViewModel, isDarkTheme, onThemeChange, userViewModel)
->>>>>>> 964ebc6 (Initial commit)
+
         }
     }
 }

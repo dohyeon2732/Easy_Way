@@ -46,27 +46,6 @@ class UserViewModel : ViewModel() {
         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             onResult(task.isSuccessful)
         }
-<<<<<<< HEAD
-
-
-        fun deleteUser(onResult: (Boolean) -> Unit) {
-            val user = auth.currentUser
-            val uid = user?.uid ?: return onResult(false)
-
-            database.child("users").child(uid).removeValue()
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        user.delete()
-                            .addOnCompleteListener { auth ->
-                                onResult(auth.isSuccessful)
-                            }
-                            .addOnFailureListener { onResult(false) }
-                    } else {
-                        onResult(false)
-                    }
-                }
-        }
-=======
     }
 
     fun deleteUser(onResult: (Boolean) -> Unit) {
@@ -85,7 +64,6 @@ class UserViewModel : ViewModel() {
                     onResult(false)
                 }
             }
->>>>>>> 964ebc6 (Initial commit)
     }
 
     fun addFavorite(facilityId: String, onResult: (Boolean) -> Unit) {
@@ -106,8 +84,6 @@ class UserViewModel : ViewModel() {
             .addOnFailureListener { onResult(false) }
     }
 
-<<<<<<< HEAD
-=======
     fun changePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
         val user = auth.currentUser
         if (user != null) {
@@ -153,5 +129,4 @@ class UserViewModel : ViewModel() {
         }
     }
 
->>>>>>> 964ebc6 (Initial commit)
 }

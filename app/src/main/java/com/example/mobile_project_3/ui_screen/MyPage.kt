@@ -1,14 +1,5 @@
 package com.example.mobile_project_3.ui_screen
 
-<<<<<<< HEAD
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
-
-@Composable
-fun MyPage(navController: NavController) {
-    
-}
-=======
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.widget.Toast
@@ -254,4 +245,3 @@ fun textFieldColors() = TextFieldDefaults.colors(
     unfocusedIndicatorColor = Color.Transparent,
     cursorColor = Color.Black
 )
->>>>>>> 964ebc6 (Initial commit)

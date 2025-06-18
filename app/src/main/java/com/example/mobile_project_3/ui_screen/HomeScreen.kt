@@ -41,10 +41,11 @@ import com.naver.maps.map.location.FusedLocationSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import androidx.compose.material3.Divider
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalNaverMapApi::class)
 @Composable
-fun HomeScreen(navController: NavController, viewModel: FacilityViewModel) {
+fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDarkTheme: Boolean) {
     var isLoading by remember { mutableStateOf(false) }
     var selectedFacility by remember { mutableStateOf<FacilityData?>(null) }
     val sheetState = rememberBottomSheetScaffoldState()
@@ -138,19 +139,30 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel) {
 
     val filteredList by viewModel.filteredFacilities.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
-        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-            Box(modifier = Modifier.weight(1f).background(Color.White)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
+        ) {
+            Box(
+                modifier = Modifier.weight(1f)
+                    .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
+            ) {
                 BottomSheetScaffold(
                     scaffoldState = sheetState,
                     sheetPeekHeight = if (showTopOnly) 160.dp else 500.dp,
                     sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    containerColor = White,
+                    containerColor = if (isDarkTheme) Color(0xFF3c3c3c) else Color.White,
                     sheetContent = {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.White)
+                                .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
                         ) {
                             Log.d("UI_DEBUG", "표시될 시설 수: ${filteredList.size}")
                             FacilityList(
@@ -175,7 +187,8 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel) {
                                         sheetState.bottomSheetState.partialExpand()
                                         selectedFacility = facility
                                     }
-                                }
+                                },
+                                isDarkTheme = isDarkTheme
                             )
                         }
                     }
@@ -184,7 +197,7 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel) {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
-                            .background(Color.White)
+                            .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White)
                     ) {
                         SearchBarWithFilter(
                             onSearchClick = { query ->
@@ -196,15 +209,19 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel) {
                             },
                             onFilterApply = { selectedFilterSet ->
                                 viewModel.setSelectedFilters(selectedFilterSet)
+                                println("적용된 필터: $selectedFilterSet")
+                                Log.d("FilterList", "필터된 표시될 시설 수: ${selectedFilterSet}")
+
                             },
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            isDarkTheme = isDarkTheme
                         )
 
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
-                                .background(Color.White),
+                                .background(if (isDarkTheme) Color(0xFF3c3c3c) else Color.White),
                             contentAlignment = Alignment.Center
                         ) {
                             NaverMapScreen(
@@ -227,11 +244,16 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel) {
 
         if (isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color(0x88000000)),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x88000000)),
+
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.CircularProgressIndicator()
             }
         }
     }
+
 }
+

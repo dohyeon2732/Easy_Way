@@ -19,7 +19,7 @@ object FacilityCsvSearcher {
     fun searchFacilitiesNearPosition(
         context: Context,
         center: LatLng,
-        limit: Int = 10
+        limit: Int = 5
     ): List<FacilityItem> {
         val lines = try {
             context.assets.open("facility_all.csv").bufferedReader().readLines().drop(1)

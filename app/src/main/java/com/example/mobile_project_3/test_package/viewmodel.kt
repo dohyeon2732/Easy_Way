@@ -62,7 +62,7 @@ class FacilityViewModel(private val userViewModel: UserViewModel) : ViewModel() 
     fun loadNearbyFacilities(context: Context) {
         viewModelScope.launch {
             val center = cameraCenterLatLng.value
-            val nearby = FacilityCsvSearcher.searchFacilitiesNearPosition(context, center, limit = 10)
+            val nearby = FacilityCsvSearcher.searchFacilitiesNearPosition(context, center, limit = 5)
 
             val detailed = nearby.map { item ->
                 async {

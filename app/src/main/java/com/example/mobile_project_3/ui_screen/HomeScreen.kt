@@ -41,6 +41,7 @@ import com.naver.maps.map.location.FusedLocationSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -140,14 +141,12 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
 
     LaunchedEffect(cameraPositionState) {
         snapshotFlow { cameraPositionState.position }
+            .debounce(500) // <- 추가!
             .distinctUntilChanged()
             .collectLatest { pos ->
                 Log.d("CAMERA_MOVE", "📍 지도 이동됨: ${pos.target}")
 
-                // ✅ ViewModel 카메라 중심 저장
                 viewModel.setCameraPosition(pos.target)
-
-                // ✅ 새 근처 시설 10개 로드 (중복은 appendFacilities가 막음)
                 viewModel.loadNearbyFacilities(context)
             }
     }

@@ -115,7 +115,7 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
             allFacilities += deferredList.awaitAll()
         }
 
-        viewModel.setFacilities(allFacilities)
+        viewModel.appendFacilities(allFacilities)
 
         // ✅ 첫 유효 좌표로 지도 이동 및 저장
         val firstValid = allFacilities.firstOrNull {

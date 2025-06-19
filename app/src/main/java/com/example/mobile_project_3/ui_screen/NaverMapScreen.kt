@@ -73,6 +73,8 @@ fun NaverMapScreen(
         Log.d("position_re", "📍 [Initial Load] moved to saved $saved")
     }
 
+
+
     // ✅ 시설 변경 시 최초 유효 좌표로 이동
     LaunchedEffect(facilities) {
         if (!viewModel.consumeDataLoaded()) {
@@ -118,6 +120,7 @@ fun NaverMapScreen(
                             onClick = {
                                 cameraPositionState.move(CameraUpdate.scrollTo(position))
                                 viewModel.setCameraPosition(position)
+                                viewModel.bringFacilityToTop(facility) // ✅ 리스트 맨 위로 이동
                                 Log.d("position_re", "📍 [Marker] moved to $position")
                                 true
                             }

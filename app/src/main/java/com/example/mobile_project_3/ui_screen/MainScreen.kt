@@ -79,7 +79,6 @@ fun MainScreen(
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             MainNavGraph(navController, facilityViewModel, isDarkTheme, onThemeChange, userViewModel)
-
         }
     }
 }

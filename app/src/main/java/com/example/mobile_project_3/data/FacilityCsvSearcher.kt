@@ -1,6 +1,7 @@
 package com.example.mobile_project_3.data
 
 import android.content.Context
+import com.naver.maps.geometry.LatLng
 import java.io.File
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -14,6 +15,43 @@ object FacilityCsvSearcher {
 
     private fun normalize(str: String): String =
         str.replace("\\s+".toRegex(), "").lowercase()
+
+    fun searchFacilitiesNearPosition(
+        context: Context,
+        center: LatLng,
+        limit: Int = 10
+    ): List<FacilityItem> {
+        val lines = try {
+            context.assets.open("facility_all.csv").bufferedReader().readLines().drop(1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList()
+        }
+
+        return lines.mapNotNull { line ->
+            val tokens = line.split(",")
+            if (tokens.size < 9) return@mapNotNull null
+
+            val lat = tokens[2].toDoubleOrNull()
+            val lng = tokens[3].toDoubleOrNull()
+            if (lat != null && lng != null) {
+                val dist = haversine(center.latitude, center.longitude, lat, lng)
+                FacilityItem(
+                    name = tokens[0],
+                    type = tokens[1],
+                    latitude = tokens[2],
+                    longitude = tokens[3],
+                    address = tokens[4],
+                    businessStatus = tokens[5],
+                    estbDate = tokens[6],
+                    facilityId = tokens[7],
+                    welfacilityId = tokens[8]
+                ) to dist
+            } else null
+        }.sortedBy { it.second }
+            .take(limit)
+            .map { it.first }
+    }
 
     // 두 좌표 간 거리 계산 (Haversine)
     private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

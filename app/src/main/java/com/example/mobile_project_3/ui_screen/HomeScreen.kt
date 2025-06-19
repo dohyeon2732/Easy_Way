@@ -20,10 +20,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -40,8 +40,9 @@ import com.naver.maps.map.compose.rememberFusedLocationSource
 import com.naver.maps.map.location.FusedLocationSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import androidx.compose.material3.Divider
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalNaverMapApi::class)
 @Composable
@@ -135,6 +136,20 @@ fun HomeScreen(navController: NavController, viewModel: FacilityViewModel, isDar
         }
 
         isLoading = false
+    }
+
+    LaunchedEffect(cameraPositionState) {
+        snapshotFlow { cameraPositionState.position }
+            .distinctUntilChanged()
+            .collectLatest { pos ->
+                Log.d("CAMERA_MOVE", "📍 지도 이동됨: ${pos.target}")
+
+                // ✅ ViewModel 카메라 중심 저장
+                viewModel.setCameraPosition(pos.target)
+
+                // ✅ 새 근처 시설 10개 로드 (중복은 appendFacilities가 막음)
+                viewModel.loadNearbyFacilities(context)
+            }
     }
 
     val filteredList by viewModel.filteredFacilities.collectAsState()

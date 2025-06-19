@@ -58,7 +58,7 @@ fun BottomNavigationBar(navController: NavController, isDarkTheme: Boolean = fal
                 onClick = {
                     if (currentRoute != Screen.Home.route) {
                         navController.navigate(Screen.Home.route) {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
                             launchSingleTop = true
                         }
                     }

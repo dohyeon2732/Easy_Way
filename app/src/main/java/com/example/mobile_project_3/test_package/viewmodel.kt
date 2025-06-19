@@ -30,10 +30,74 @@ data class FacilityData(
 
 class FacilityViewModel(private val userViewModel: UserViewModel) : ViewModel() {
 
-
     // ✅ 지도 중심 좌표만 기억
     private val _cameraCenterLatLng = MutableStateFlow(LatLng(37.5408, 127.0793)) // 서울
     val cameraCenterLatLng: StateFlow<LatLng> get() = _cameraCenterLatLng
+
+    fun bringFacilityToTop(facility: FacilityData) {
+        val current = _facilities.value.toMutableList()
+        current.removeAll { it.wlfctlId == facility.wlfctlId }
+        current.add(0, facility)
+        _facilities.value = current
+        updateFilteredFacilities()
+    }
+
+    fun appendFacilities(newList: List<FacilityData>) {
+        val favoriteMap = _favoriteFacilities.value.associateBy { it.wlfctlId }
+        val current = _facilities.value.toMutableList()
+
+        newList.forEach { newItem ->
+            // 이미 동일 ID가 있으면 스킵
+            if (current.none { it.wlfctlId == newItem.wlfctlId }) {
+                current.add(
+                    newItem.copy(isFavorite = favoriteMap.containsKey(newItem.wlfctlId))
+                )
+            }
+        }
+
+        _facilities.value = current
+        updateFilteredFacilities()
+    }
+
+    fun loadNearbyFacilities(context: Context) {
+        viewModelScope.launch {
+            val center = cameraCenterLatLng.value
+            val nearby = FacilityCsvSearcher.searchFacilitiesNearPosition(context, center, limit = 10)
+
+            val detailed = nearby.map { item ->
+                async {
+                    try {
+                        val xml = fetchEvalInfoByFacilityId("wfcltId", item.welfacilityId)
+                        val eval = parseEvalXml(xml)
+                        val evalList = eval.evalInfo.split(",").map { it.trim() }
+
+                        FacilityData(
+                            faclNm = item.name,
+                            wlfctlId = item.welfacilityId,
+                            evalInfo = evalList,
+                            address = item.address,
+                            latitude = item.latitude,
+                            longitude = item.longitude,
+                            isFavorite = false,
+                            type = item.type
+                        )
+                    } catch (e: Exception) {
+                        FacilityData(
+                            faclNm = item.name,
+                            wlfctlId = item.welfacilityId,
+                            evalInfo = listOf("정보 없음"),
+                            address = item.address,
+                            latitude = item.latitude,
+                            longitude = item.longitude,
+                            isFavorite = false,
+                            type = item.type
+                        )
+                    }
+                }
+            }.awaitAll()
+            appendFacilities(detailed)
+        }
+    }
 
     fun setCameraPosition(latLng: LatLng) {
         _cameraCenterLatLng.value = latLng
@@ -78,6 +142,7 @@ class FacilityViewModel(private val userViewModel: UserViewModel) : ViewModel() 
 
     private val _filteredFacilities = MutableStateFlow<List<FacilityData>>(emptyList())
     val filteredFacilities: StateFlow<List<FacilityData>> get() = _filteredFacilities
+
 
     private val _favoriteFacilities = MutableStateFlow<List<FacilityData>>(emptyList())
     val favoriteFacilities: StateFlow<List<FacilityData>> get() = _favoriteFacilities
